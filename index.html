@@ -323,7 +323,7 @@ function render(){
     <div class="item" data-id="${esc(p.id)}">
       <div class="info">
         <div class="name">${esc(p.name)} ${p.women ? '<span class="chip w">القسم النسائي</span>' : ""}</div>
-        <div class="meta">${esc(p.city || "بدون مدينة")} · سجّل ${dateAr(p.created_at)}</div>
+        <div class="meta">${esc(p.city || "بدون مدينة")} · سجّل ${dateAr(p.created_at)}${p.instagram ? ' · <a href="https://instagram.com/' + encodeURIComponent(String(p.instagram).replace(/^@/,"")) + '" target="_blank" rel="noopener noreferrer" dir="ltr">@' + esc(String(p.instagram).replace(/^@/,"")) + '</a>' : ""}</div>
         <div class="checks">
           <span class="chip ${p.bio_ok ? "y" : "n"}">نبذة</span>
           <span class="chip ${p.portfolio >= 3 ? "y" : "n"}">أعمال ${fmt(p.portfolio)}</span>
