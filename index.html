@@ -222,7 +222,7 @@ const IDLE_MS = 15 * 60 * 1000;
 const $ = id => document.getElementById(id);
 const views = ["vLogin","vSignup","vEnroll","vVerify","vNotAdmin","vDash"];
 const show = v => { views.forEach(x => $(x).hidden = x !== v); $("topActions").hidden = !(v === "vDash" || v === "vNotAdmin" || v === "vEnroll" || v === "vVerify"); };
-const fmt = n => Number(n || 0).toLocaleString("ar-QA", {maximumFractionDigits: 2});
+const fmt = n => Number(n || 0).toLocaleString("en-US", {maximumFractionDigits: 2});
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const safeUrl = u => /^https:\/\//i.test(u || "") ? esc(u) : "";
 const dateAr = d => d ? new Date(d).toLocaleDateString("ar-QA", {day:"numeric", month:"short"}) : "—";
