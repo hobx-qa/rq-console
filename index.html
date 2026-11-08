@@ -76,6 +76,23 @@ section .sub{margin:0 0 12px;color:var(--muted);font-size:13.5px}
 .susp input{border:1px solid var(--line);border-radius:10px;padding:10px 12px;background:var(--surface);color:var(--fg)}
 .susp .warn{font-size:13px;color:var(--warn)}
 .filters{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 10px}
+.bk{flex-direction:column;align-items:stretch}
+.bk .top{display:flex;justify-content:space-between;gap:8px;align-items:flex-start;flex-wrap:wrap}
+.bk .money{display:flex;gap:14px;flex-wrap:wrap;font-size:13px;color:var(--muted)}
+.bk .money b{color:var(--fg);font-variant-numeric:tabular-nums}
+.panel{display:flex;flex-direction:column;gap:10px;background:var(--bg);border-radius:12px;padding:12px}
+.panel select,.panel input,.search{border:1px solid var(--line);border-radius:10px;padding:10px 12px;background:var(--surface);color:var(--fg);width:100%}
+.chat{display:flex;flex-direction:column;gap:6px;max-height:360px;overflow-y:auto}
+.msg{max-width:85%;padding:8px 12px;border-radius:12px;font-size:14px;line-height:1.5}
+.msg small{display:block;font-size:11px;opacity:.75;margin-top:2px}
+.msg.client{align-self:flex-start;background:var(--surface);border:1px solid var(--line)}
+.msg.photographer{align-self:flex-end;background:var(--maroon);color:var(--surface)}
+.msg.admin{align-self:center;background:var(--gold-soft);color:var(--gold)}
+.alert{display:flex;gap:10px;align-items:flex-start;background:var(--warn-soft);color:var(--warn);border-radius:12px;padding:12px 14px;font-size:14px}
+.alert.bad{background:var(--bad-soft);color:var(--bad)}
+.alert.ok{background:var(--ok-soft);color:var(--ok)}
+.viewer-note{background:var(--gold-soft);color:var(--gold);border-radius:12px;padding:10px 14px;font-size:14px}
+body.viewer [data-act],body.viewer .switch,body.viewer #runNow,body.viewer .admin-only{display:none!important}
 .filters button[aria-pressed="true"]{background:var(--maroon);color:var(--surface);border-color:var(--maroon)}
 .empty{background:var(--surface);border:1px dashed var(--line);border-radius:14px;padding:18px;color:var(--muted);text-align:center}
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px}
@@ -117,19 +134,19 @@ td.num{font-variant-numeric:tabular-nums}
 
   <!-- تسجيل الدخول -->
   <form class="card" id="vLogin" hidden>
-    <h2>دخول المدير</h2>
-    <p>هذه الصفحة للإدارة فقط.</p>
+    <h2>الدخول</h2>
+    <p>هذه الصفحة للإدارة والشركاء فقط.</p>
     <label>الإيميل<input id="email" type="email" autocomplete="username" required dir="ltr"></label>
     <label>كلمة السر<input id="password" type="password" autocomplete="current-password" required dir="ltr"></label>
     <div class="err" id="loginErr"></div>
     <button class="btn-main" type="submit" id="loginBtn">دخول</button>
-    <button class="link" type="button" id="toSignup">أول مرة؟ أنشئ حساب المدير</button>
+    <button class="link" type="button" id="toSignup">أول مرة؟ أنشئ حسابك</button>
   </form>
 
   <!-- إنشاء الحساب أول مرة -->
   <form class="card" id="vSignup" hidden>
-    <h2>إنشاء حساب المدير</h2>
-    <p>مرة واحدة فقط. بعدها يفعّل Claude صلاحية المدير لحسابك.</p>
+    <h2>إنشاء حساب</h2>
+    <p>مرة واحدة فقط. بعدها يضيفك المدير من لوحته.</p>
     <label>الإيميل<input id="sEmail" type="email" autocomplete="username" required dir="ltr"></label>
     <label>كلمة سر قوية (12 حرفاً أو أكثر)<input id="sPassword" type="password" autocomplete="new-password" minlength="12" required dir="ltr"></label>
     <div class="err" id="signupErr"></div>
@@ -160,19 +177,26 @@ td.num{font-variant-numeric:tabular-nums}
   <!-- ليس مديراً بعد -->
   <div class="card" id="vNotAdmin" hidden>
     <h2>الحساب جاهز</h2>
-    <p>دخلت بنجاح مع التحقق بخطوتين، لكن صلاحية المدير لم تُفعَّل بعد. قل لـ Claude: «فعّل حسابي مدير»، ثم اضغط تحديث.</p>
+    <p>دخلت بنجاح مع التحقق بخطوتين، لكن حسابك لم يُضف بعد. أرسل هذا الإيميل للمدير ليضيفك من «الإعدادات»، ثم اضغط تحديث.</p>
     <div class="secret" id="myEmail"></div>
     <button type="button" id="retryAdmin">تحديث</button>
   </div>
 
   <!-- لوحة الإدارة -->
   <div id="vDash" hidden style="display:flex;flex-direction:column;gap:22px">
+    <div class="viewer-note" id="viewerNote" hidden>وضع المتابعة: تشاهد كل شيء، والقرارات عند المدير.</div>
     <div class="stats">
       <div class="stat"><div class="k">مصورون معتمدون</div><div class="v" data-s="photographers_approved">—</div></div>
       <div class="stat"><div class="k">حجوزات هذا الشهر</div><div class="v" data-s="bookings_month">—</div></div>
       <div class="stat gold"><div class="k">عمولتك هذا الشهر</div><div class="v"><span data-s="commission_month">—</span> <small>ر.ق</small></div></div>
       <div class="stat"><div class="k">مستحقات للمصورين</div><div class="v"><span data-s="payouts_due">—</span> <small>ر.ق</small></div></div>
     </div>
+
+    <section>
+      <h2>يحتاج انتباهك <span class="count" id="cAlerts">0</span></h2>
+      <p class="sub">تُحسب تلقائياً من الحجوزات، وتتحدث اللوحة وحدها كل دقيقة.</p>
+      <div class="list" id="alerts"></div>
+    </section>
 
     <section>
       <h2>طلبات المصورين <span class="count" id="cPending">0</span></h2>
@@ -205,6 +229,24 @@ td.num{font-variant-numeric:tabular-nums}
     </section>
 
     <section>
+      <h2>إدارة الحجوزات</h2>
+      <p class="sub">ألغِ حجزاً، أو انقله لمصوّر آخر بنفس السعر، أو سجّل استرجاع المبلغ، أو اقرأ المحادثة عند أي خلاف. كل تغيير يصل إشعاره للعميل والمصوّر.</p>
+      <div class="filters" id="bkFilters">
+        <button type="button" data-b="open" aria-pressed="true">مفتوحة</button>
+        <button type="button" data-b="refund" aria-pressed="false">تحتاج استرجاع</button>
+        <button type="button" data-b="all" aria-pressed="false">الكل</button>
+      </div>
+      <div class="list" id="bkList"></div>
+    </section>
+
+    <section>
+      <h2>العملاء <span class="count" id="cClients">0</span></h2>
+      <p class="sub">أوقف أي عميل يسيء الاستخدام: لا يستطيع الحجز ولا إرسال الرسائل، ويصله إشعار.</p>
+      <input class="search" id="clSearch" type="search" placeholder="ابحث بالاسم أو الجوال" style="margin-bottom:10px">
+      <div class="list" id="clList"></div>
+    </section>
+
+    <section>
       <h2>آخر الحجوزات</h2>
       <p class="sub">آخر 15 حجزاً مع عمولتك.</p>
       <div id="bookings"></div>
@@ -226,6 +268,12 @@ td.num{font-variant-numeric:tabular-nums}
         <div class="row"><div class="l"><b>العمولة</b></div><div class="val" id="setCommission">—</div></div>
         <div class="row"><div class="l"><b>الفترة المجانية للمصور</b></div><div class="val" id="setTrial">—</div></div>
         <div class="row"><div class="l"><b>حد الصور</b><span>المجاني / المشترك</span></div><div class="val" id="setLimits">—</div></div>
+        <div class="row admin-only" id="viewersRow">
+          <div class="l"><b>الشركاء (متابعة فقط)</b><span>يشاهدون الأرقام والمصورين والحجوزات، ولا يستطيعون تغيير أي شيء ولا قراءة المحادثات أو أرقام الجوال. يُنشئ الشريك حسابه من هذه الصفحة أولاً، ثم تضيفه هنا بإيميله.</span>
+            <div class="list" id="viewers" style="margin-top:8px"></div>
+            <div class="actions" style="margin-top:8px"><input class="search" id="viewerEmail" type="email" dir="ltr" placeholder="partner@email.com" style="flex:1;min-width:180px"><button class="btn-main" type="button" id="addViewer">إضافة شريك</button></div>
+          </div>
+        </div>
       </div>
     </section>
   </div>
@@ -245,7 +293,7 @@ const show = v => { views.forEach(x => $(x).hidden = x !== v); $("topActions").h
 const fmt = n => Number(n || 0).toLocaleString("en-US", {maximumFractionDigits: 2});
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const safeUrl = u => /^https:\/\//i.test(u || "") ? esc(u) : "";
-const dateAr = d => d ? new Date(d).toLocaleDateString("ar-QA", {day:"numeric", month:"short"}) : "—";
+const dateAr = d => d ? new Date(d).toLocaleDateString("ar-QA", {day:"numeric", month:"short", numberingSystem:"latn"}) : "—";
 function toast(m){ const t=$("toast"); t.textContent=m; t.hidden=false; clearTimeout(toast.t); toast.t=setTimeout(()=>t.hidden=true,3200); }
 function arErr(e){
   const m = (e && (e.message || e.error_description)) || String(e || "");
@@ -292,7 +340,7 @@ $("vLogin").addEventListener("submit", async e => {
 });
 $("vSignup").addEventListener("submit", async e => {
   e.preventDefault(); $("signupErr").textContent = "";
-  const { data, error } = await sb.auth.signUp({ email: $("sEmail").value.trim(), password: $("sPassword").value, options: { data: { full_name: "مازن" } } });
+  const { data, error } = await sb.auth.signUp({ email: $("sEmail").value.trim(), password: $("sPassword").value, options: { data: {} } });
   $("sPassword").value = "";
   if (error) return $("signupErr").textContent = arErr(error);
   if (data.session) return route();
@@ -323,10 +371,14 @@ $("logout").onclick = async () => { await sb.auth.signOut(); show("vLogin"); };
 $("refresh").onclick = () => route();
 $("retryAdmin").onclick = () => route();
 
-let data = null, media = null, busy = false, photogs = [], phFilter = "all";
+let data = null, media = null, busy = false, photogs = [], phFilter = "all", role = "admin", bks = [], bkScope = "open", clients = [], viewers = [], openBk = {};
 async function loadDash(){
-  const [o, m, ph] = await Promise.all([sb.rpc("admin_overview"), sb.rpc("admin_media_queue"), sb.rpc("admin_list_photographers")]);
-  photogs = (ph && ph.data) || [];
+  const r0 = await sb.rpc("panel_role"); role = (r0 && r0.data) || "admin";
+  document.body.classList.toggle("viewer", role === "viewer"); $("viewerNote").hidden = role !== "viewer";
+  document.querySelector(".brand p").textContent = role === "viewer" ? "متابعة" : "الإدارة";
+  const [o, m, ph, bl, cl, vw] = await Promise.all([sb.rpc("admin_overview"), sb.rpc("admin_media_queue"), sb.rpc("admin_list_photographers"),
+    sb.rpc("admin_list_bookings", { p_scope: "all" }), sb.rpc("admin_list_clients"), role === "admin" ? sb.rpc("admin_list_viewers") : Promise.resolve({ data: [] })]);
+  photogs = (ph && ph.data) || []; bks = (bl && bl.data) || []; clients = (cl && cl.data) || []; viewers = (vw && vw.data) || [];
   if (o.error) {
     if (/للمدير فقط/.test(o.error.message)) { const { data: u } = await sb.auth.getUser(); $("myEmail").textContent = u?.user?.email || ""; return show("vNotAdmin"); }
     show("vDash"); return toast(arErr(o.error));
@@ -384,7 +436,7 @@ function render(){
     B.map(b => `<tr title="${esc(b.reason || "")}"><td>${esc(b.photographer)}</td><td>${esc(b.client || "—")}</td><td>${dateAr(b.event_date)}</td><td class="num">${fmt(b.price)}</td><td class="num">${fmt(b.commission)}</td><td><span class="pill p-${esc(b.status)}">${sN[b.status] || esc(b.status)}</span></td><td>${pN[b.payment] || esc(b.payment)}</td><td data-id="${esc(b.id)}">${(b.status==="confirmed"||b.status==="completed") && b.payment==="unpaid" ? '<span style="display:inline-flex;gap:6px"><button type="button" data-act="deposit" data-m="link">العربون: رابط</button><button type="button" data-act="deposit" data-m="cash">العربون: كاش</button></span>' : (b.status!=="cancelled" && b.payment==="deposit_paid" ? '<span style="display:inline-flex;gap:6px"><button type="button" data-act="fullpay" data-m="link">الباقي: رابط</button><button type="button" data-act="fullpay" data-m="cash">الباقي: كاش</button></span>' : "")}</td></tr>`).join("")
   }</tbody></table></div>` : '<div class="empty">لا توجد حجوزات بعد.</div>';
 
-  renderPhotogs();
+  renderPhotogs(); renderAlerts(); renderBookings(); renderClients(); renderViewers();
   const st = data.settings;
   $("autoSwitch").setAttribute("aria-checked", String(!!st.auto_approve_photographers));
   $("autoSwitch").closest(".row").querySelector(".l span").textContent = st.auto_approve_photographers ? "يعمل: يُقبل المصور عند اكتمال صفحته." : "مطفأ: كل مصور ينتظر قرارك.";
@@ -415,6 +467,79 @@ function renderPhotogs(){
       <div class="actions">${btn}</div>
     </div>`;
   }).join("") : '<div class="empty">لا يوجد مصورون في هذا القسم.</div>';
+}
+
+const ST = { pending:["بانتظار المصوّر","p-pending"], confirmed:["مؤكد","p-confirmed"], completed:["مكتمل","p-completed"], cancelled:["ملغي","p-cancelled"] };
+const PAY = { unpaid:"لم يدفع", deposit_paid:"العربون مدفوع", paid:"مدفوع بالكامل", refunded:"تم الاسترجاع" };
+const daysTo = d => Math.round((new Date(d + "T00:00:00") - new Date(new Date().toDateString())) / 864e5);
+
+function renderAlerts(){
+  const A = [], susp = new Set(photogs.filter(p => p.status !== "approved").map(p => p.id));
+  bks.forEach(b => {
+    const open = b.status === "pending" || b.status === "confirmed", dd = daysTo(b.event_date), tag = " · " + esc(b.client) + " مع " + esc(b.photographer) + " · " + dateAr(b.event_date);
+    if (b.status === "cancelled" && (b.payment === "deposit_paid" || b.payment === "paid")) A.push(["bad", "حجز ملغي ومدفوع: أرجع المبلغ للعميل ثم سجّل الاسترجاع" + tag, b.id]);
+    if (open && susp.has(b.photographer_id)) A.push(["bad", "حجز مفتوح مع مصوّر موقوف: انقله لمصوّر آخر أو ألغه" + tag, b.id]);
+    if (b.status === "confirmed" && b.payment === "unpaid" && dd >= 0 && dd <= 3) A.push(["", "المناسبة بعد " + dd + " يوم والعربون غير مدفوع" + tag, b.id]);
+    if (b.status === "confirmed" && b.payment === "deposit_paid" && dd >= 0 && dd <= 3) A.push(["", "المتبقي غير مدفوع والمناسبة بعد " + dd + " يوم" + tag, b.id]);
+  });
+  $("cAlerts").textContent = fmt(A.length);
+  $("alerts").innerHTML = A.length ? A.map(a => '<div class="alert ' + a[0] + '" data-goto="' + esc(a[2]) + '" style="cursor:pointer">' + a[1] + '</div>').join("")
+    : '<div class="alert ok">كل شيء تمام، لا يوجد ما يحتاج تدخلك الآن ✓</div>';
+}
+
+function renderBookings(){
+  const L = bks.filter(b => bkScope === "all" || (bkScope === "open" ? (b.status === "pending" || b.status === "confirmed") : (b.status === "cancelled" && (b.payment === "deposit_paid" || b.payment === "paid"))));
+  if (bkScope === "open") L.sort((a, b) => String(a.event_date).localeCompare(String(b.event_date)));
+  const others = photogs.filter(p => p.status === "approved");
+  $("bkList").innerHTML = L.length ? L.map(b => {
+    const st = ST[b.status] || [b.status, ""], open = b.status === "pending" || b.status === "confirmed", paid = b.payment === "deposit_paid" || b.payment === "paid";
+    const acts = [];
+    if (role === "admin" && b.messages > 0) acts.push('<button type="button" data-act="chat">المحادثة (' + fmt(b.messages) + ')</button>');
+    if (open) acts.push('<button type="button" data-act="askMove">نقل لمصوّر آخر</button>', '<button class="btn-bad" type="button" data-act="askCancelB">إلغاء</button>');
+    if (paid && b.status === "cancelled") acts.push('<button class="btn-ok" type="button" data-act="askRefund">سجّل الاسترجاع</button>');
+    let extra = "";
+    if (openBk[b.id] === "chat") extra = '<div class="panel"><div class="chat" id="chat-' + esc(b.id) + '">جارٍ التحميل…</div></div>';
+    if (openBk[b.id] === "move") extra = '<div class="panel"><b>انقل الحجز إلى</b><select>' + others.filter(p => p.id !== b.photographer_id).map(p => '<option value="' + esc(p.id) + '">' + esc(p.name) + (p.city ? " · " + esc(p.city) : "") + '</option>').join("") + '</select><input type="text" maxlength="200" placeholder="ملاحظة للمصوّر السابق (اختياري)"><div class="sub" style="margin:0">السعر يبقى ' + fmt(b.price) + ' ر.ق كما اتفق العميل.</div><div class="actions"><button class="btn-main" type="button" data-act="doMove">تأكيد النقل</button><button type="button" data-act="closeBk">تراجع</button></div></div>';
+    if (openBk[b.id] === "cancel") extra = '<div class="panel"><b>سبب الإلغاء (يصل للعميل والمصوّر)</b><input type="text" maxlength="200" placeholder="مثلاً: المصوّر اعتذر لظرف طارئ">' + (paid ? '<div class="sub" style="margin:0;color:var(--warn)">العميل دفع ' + (b.payment === "paid" ? "المبلغ كاملاً" : "العربون") + '. بعد الإلغاء يظهر في «تحتاج استرجاع».</div>' : '') + '<div class="actions"><button class="btn-bad" type="button" data-act="doCancelB">تأكيد الإلغاء</button><button type="button" data-act="closeBk">تراجع</button></div></div>';
+    if (openBk[b.id] === "refund") extra = '<div class="panel"><b>هل أرجعت المبلغ للعميل؟</b><div class="sub" style="margin:0">سجّل هذا فقط بعد أن تحوّل له المبلغ فعلاً. يصله إشعار بالاسترجاع.</div><div class="actions"><button class="btn-ok" type="button" data-act="doRefund">نعم، أرجعته</button><button type="button" data-act="closeBk">تراجع</button></div></div>';
+    return `<div class="item bk" data-id="${esc(b.id)}" id="bk-${esc(b.id)}">
+      <div class="top"><div><div class="name">${esc(b.package || "حجز")} <span class="pill ${st[1]}">${st[0]}</span></div>
+        <div class="meta">${esc(b.client)}${b.client_phone ? ' · <span dir="ltr">' + esc(b.client_phone) + '</span>' : ""} ← ${esc(b.photographer || "—")}</div>
+        <div class="meta">${dateAr(b.event_date)}${b.location ? " · " + esc(b.location) : ""} · رقم ${esc(b.code)}</div>
+        ${b.reason && b.status === "cancelled" ? '<div class="meta">السبب: ' + esc(b.reason) + '</div>' : ""}</div>
+        <span class="chip">${PAY[b.payment] || esc(b.payment)}</span></div>
+      <div class="money"><span>السعر <b>${fmt(b.price)}</b></span><span>العربون <b>${fmt(b.deposit)}</b></span><span>عمولتك <b>${fmt(b.commission)}</b></span><span>للمصوّر <b>${fmt(b.payout)}</b></span></div>
+      ${acts.length ? '<div class="actions">' + acts.join("") + '</div>' : ""}${extra}
+    </div>`;
+  }).join("") : '<div class="empty">' + (bkScope === "refund" ? "لا توجد مبالغ تنتظر الاسترجاع ✓" : "لا توجد حجوزات هنا.") + '</div>';
+  Object.keys(openBk).forEach(id => { if (openBk[id] === "chat") loadChat(id); });
+}
+
+async function loadChat(id){
+  const el = document.getElementById("chat-" + id); if (!el) return;
+  const { data: M, error } = await sb.rpc("admin_booking_messages", { p_id: id });
+  if (error) { el.textContent = arErr(error); return; }
+  const who = { client:"العميل", photographer:"المصوّر", admin:"الإدارة" };
+  el.innerHTML = (M || []).length ? M.map(m => '<div class="msg ' + m.who + '">' + esc(m.body) + '<small>' + who[m.who] + ' · ' + new Date(m.at).toLocaleString("ar-QA", {day:"numeric", month:"short", hour:"numeric", minute:"2-digit", numberingSystem:"latn"}) + '</small></div>').join("") : "لا توجد رسائل.";
+  el.scrollTop = el.scrollHeight;
+}
+
+function renderClients(){
+  $("cClients").textContent = fmt(clients.length);
+  const q = ($("clSearch").value || "").trim();
+  const L = clients.filter(c => !q || String(c.name).includes(q) || String(c.phone || "").includes(q) || String(c.email || "").includes(q));
+  $("clList").innerHTML = L.length ? L.slice(0, 60).map(c => `<div class="item" data-id="${esc(c.id)}">
+      <div class="info"><div class="name">${esc(c.name)} ${c.blocked_at ? '<span class="pill p-off">موقوف</span>' : ""}</div>
+        <div class="meta">${c.phone ? '<span dir="ltr">' + esc(c.phone) + '</span> · ' : ""}${c.email ? '<span dir="ltr">' + esc(c.email) + '</span> · ' : ""}سجّل ${dateAr(c.created_at)}</div>
+        <div class="meta">حجوزات ${fmt(c.bookings)} · ملغاة ${fmt(c.cancelled)} · دفع ${fmt(c.spent)} ر.ق</div>
+        ${c.blocked_at && c.reason ? '<div class="meta">السبب: ' + esc(c.reason) + '</div>' : ""}</div>
+      <div class="actions">${c.blocked_at ? '<button class="btn-ok" type="button" data-act="unblockC">إعادة تفعيل</button>' : '<button class="btn-bad" type="button" data-act="askBlockC">إيقاف</button>'}</div>
+    </div>`).join("") : '<div class="empty">لا يوجد عملاء' + (q ? " بهذا البحث" : " بعد") + '.</div>';
+}
+
+function renderViewers(){
+  if (role !== "admin") return;
+  $("viewers").innerHTML = viewers.length ? viewers.map(v => '<div class="item" data-id="' + esc(v.id) + '" data-email="' + esc(v.email) + '" style="padding:10px"><div class="info" dir="ltr" style="text-align:right">' + esc(v.email) + '</div><div class="actions"><button class="btn-bad" type="button" data-act="rmViewer">إزالة</button></div></div>').join("") : '<div class="sub" style="margin:0">لا يوجد شركاء بعد.</div>';
 }
 
 function suspForm(box){
@@ -449,6 +574,21 @@ document.addEventListener("click", e => {
   if (a === "rejectP") act(() => sb.rpc("admin_review_photographer", { p_id: id, p_status: "rejected", p_note: "رُفض من الإدارة" }), "تم رفض الطلب");
   if (a === "cancel") render();
   if (a === "askSusp") suspForm(box);
+  if (a === "chat") { openBk = { [id]: openBk[id] === "chat" ? null : "chat" }; renderBookings(); }
+  if (a === "askMove") { openBk = { [id]: "move" }; renderBookings(); }
+  if (a === "askCancelB") { openBk = { [id]: "cancel" }; renderBookings(); }
+  if (a === "askRefund") { openBk = { [id]: "refund" }; renderBookings(); }
+  if (a === "closeBk") { openBk = {}; renderBookings(); }
+  if (a === "doMove") { const pn = box.querySelector(".panel"); const to = pn.querySelector("select").value;
+    if (!to) return toast("لا يوجد مصوّر آخر متاح");
+    openBk = {}; act(() => sb.rpc("admin_booking_action", { p_id: id, p_action: "reassign", p_photographer: to, p_note: pn.querySelector("input").value.trim() || null }), "نُقل الحجز، ووصل الإشعار للعميل والمصوّرين"); }
+  if (a === "doCancelB") { const note = box.querySelector(".panel input").value.trim(); openBk = {};
+    act(() => sb.rpc("admin_booking_action", { p_id: id, p_action: "cancel", p_note: note || null }), "أُلغي الحجز، ووصل الإشعار"); }
+  if (a === "doRefund") { openBk = {}; act(() => sb.rpc("admin_booking_action", { p_id: id, p_action: "refund" }), "سُجّل الاسترجاع، ووصل الإشعار للعميل"); }
+  if (a === "askBlockC") { const ac = box.querySelector(".actions"); ac.outerHTML = '<div class="panel" style="flex:1 1 100%"><input type="text" maxlength="200" placeholder="السبب (يصل للعميل، اختياري)"><div class="actions"><button class="btn-bad" type="button" data-act="doBlockC">تأكيد الإيقاف</button><button type="button" data-act="cancel">تراجع</button></div></div>'; }
+  if (a === "doBlockC") act(() => sb.rpc("admin_set_client_block", { p_id: id, p_block: true, p_note: box.querySelector(".panel input").value.trim() || null }), "أُوقف العميل");
+  if (a === "unblockC") act(() => sb.rpc("admin_set_client_block", { p_id: id, p_block: false }), "عاد العميل للعمل");
+  if (a === "rmViewer") act(() => sb.rpc("admin_set_viewer", { p_email: box.dataset.email, p_add: false }), "أُزيل الشريك");
   if (a === "doSusp") {
     const f = box.querySelector(".susp"), sel = f.querySelector("[data-days][aria-pressed=true]");
     const d = sel && sel.dataset.days ? Number(sel.dataset.days) : null;
@@ -470,9 +610,19 @@ document.addEventListener("click", e => {
 document.addEventListener("click", e => {
   const o = e.target.closest(".susp [data-days]");
   if (o) { o.parentElement.querySelectorAll("button").forEach(x => x.setAttribute("aria-pressed", String(x === o))); return; }
+  const g = e.target.closest("[data-goto]");
+  if (g) { bkScope = "all"; openBk = {}; document.querySelectorAll("#bkFilters button").forEach(x => x.setAttribute("aria-pressed", String(x.dataset.b === "all"))); renderBookings();
+    const el = document.getElementById("bk-" + g.dataset.goto); if (el) { el.scrollIntoView({ behavior: "smooth", block: "center" }); el.style.outline = "2px solid var(--maroon)"; setTimeout(() => el.style.outline = "", 2500); } return; }
+  const bf = e.target.closest("#bkFilters [data-b]");
+  if (bf) { bkScope = bf.dataset.b; openBk = {}; document.querySelectorAll("#bkFilters button").forEach(x => x.setAttribute("aria-pressed", String(x === bf))); renderBookings(); return; }
   const f = e.target.closest("#phFilters [data-f]");
   if (f) { phFilter = f.dataset.f; document.querySelectorAll("#phFilters button").forEach(x => x.setAttribute("aria-pressed", String(x === f))); renderPhotogs(); }
 });
+$("clSearch").addEventListener("input", renderClients);
+$("addViewer").onclick = () => { const em = $("viewerEmail").value.trim(); if (!/^\S+@\S+\.\S+$/.test(em)) return toast("اكتب إيميل الشريك");
+  act(() => sb.rpc("admin_set_viewer", { p_email: em, p_add: true }), "أُضيف الشريك. يضغط «تحديث» في حسابه ليرى اللوحة"); $("viewerEmail").value = ""; };
+// تحديث تلقائي كل دقيقة، إلا إذا كانت هناك نافذة مفتوحة للكتابة
+setInterval(() => { if (!data || $("vDash").hidden || document.hidden || Object.values(openBk).some(Boolean) || document.querySelector(".susp, .item .panel")) return; loadDash(); }, 60000);
 $("runNow").onclick = () => act(() => sb.rpc("run_automations_admin"), "تم التشغيل");
 $("autoSwitch").onclick = () => { if (!data) return; const next = !data.settings.auto_approve_photographers;
   act(() => sb.from("app_settings").update({ value: next, updated_at: new Date().toISOString() }).eq("key", "auto_approve_photographers"), next ? "القبول التلقائي يعمل" : "القبول التلقائي متوقف"); };
