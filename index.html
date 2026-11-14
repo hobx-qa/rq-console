@@ -63,6 +63,7 @@ section .sub{margin:0 0 12px;color:var(--muted);font-size:13.5px}
 .item .info{min-width:0;flex:1 1 220px}
 .item .name{font-weight:700;font-size:16px}
 .item .meta{color:var(--muted);font-size:13px}
+.pdet{margin-top:6px}.pdet summary{cursor:pointer;color:var(--maroon);font-size:13px;font-weight:700;padding:4px 0}.pdet .meta{margin-top:6px;line-height:1.8}
 .checks{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
 .chip{font-size:12px;padding:2px 9px;border-radius:999px;background:var(--bg);color:var(--muted);border:1px solid var(--line)}
 .chip.y{background:var(--ok-soft);color:var(--ok);border-color:transparent}
@@ -501,6 +502,12 @@ function renderPhotogs(){
         <div class="name">${esc(p.name)} ${pill} ${p.women ? '<span class="chip w">القسم النسائي</span>' : ""}</div>
         <div class="meta">${esc(p.city || "بدون مدينة")} · حجوزات مكتملة ${fmt(p.bookings_done)} · قادمة ${fmt(p.bookings_upcoming)}${Number(p.reviews) > 0 ? " · ★ " + Number(p.rating).toFixed(1) : ""}</div>
         ${p.note && p.status !== "approved" ? '<div class="meta">السبب: ' + esc(p.note) + '</div>' : ""}
+        <details class="pdet"><summary>الخدمات والباقات</summary>
+          <div class="meta"><b>الخدمات:</b> ${(p.specialties || []).length ? (p.specialties || []).map(t => '<span class="chip">' + esc(t) + '</span>').join(" ") : "لم يحدد"}</div>
+          <div class="meta"><b>الباقات:</b> ${(p.packages || []).length ? (p.packages || []).map(k => esc(k.title) + " — " + fmt(k.price) + " ر.ق").join("<br>") : '<span style="color:var(--bad)">لا توجد باقات</span>'}</div>
+          <div class="meta"><b>صور المعرض:</b> ${fmt(p.photos || 0)}${Number(p.photos || 0) < 4 ? ' <span style="color:var(--bad)">(أقل من 4)</span>' : ""}</div>
+          ${p.bio ? '<div class="meta"><b>النبذة:</b> ' + esc(p.bio) + '</div>' : ""}
+        </details>
       </div>
       <div class="actions">${btn}</div>
     </div>`;
