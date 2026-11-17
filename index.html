@@ -108,6 +108,20 @@ body.viewer [data-act],body.viewer .switch,body.viewer #runNow,body.viewer .admi
 .media img{display:block;width:100%;aspect-ratio:4/3;object-fit:contain;max-width:100%}
 .media .body{padding:10px;display:flex;flex-direction:column;gap:8px}
 .media .body .actions button{flex:1}
+.rv-start{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 12px}
+.rv-start .btn-ok{font-size:16px;padding:12px 18px}
+.rv{position:fixed;inset:0;z-index:200;background:#0f0b0c;color:#fff;display:flex;flex-direction:column}
+.rv-top{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:calc(10px + env(safe-area-inset-top,0px)) 14px 8px}
+.rv-top button{background:rgba(255,255,255,.14);color:#fff;border:0;border-radius:99px;padding:8px 14px;font:inherit}
+.rv-who{text-align:center;font-size:14px;line-height:1.4}.rv-who small{display:block;opacity:.7}
+.rv-img{flex:1;min-height:0;display:flex;align-items:center;justify-content:center;padding:6px;touch-action:pan-y;transition:transform .18s,opacity .18s}
+.rv-img img{max-width:100%;max-height:100%;object-fit:contain;border-radius:10px}
+.rv-img.go-ok{transform:translateX(40%);opacity:0}.rv-img.go-no{transform:translateX(-40%);opacity:0}
+.rv-hint{text-align:center;font-size:12px;opacity:.65;padding:4px}
+.rv-btns{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:8px 14px calc(14px + env(safe-area-inset-bottom,0px))}
+.rv-btns button{min-height:64px;border:0;border-radius:16px;font:inherit;font-size:20px;font-weight:800;color:#fff}
+.rv-ok{background:#2f7a4f}.rv-no{background:#a3322f}
+.rv-done{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;font-size:20px}
 .tbl{overflow-x:auto;background:var(--surface);border:1px solid var(--line);border-radius:14px}
 table{width:100%;border-collapse:collapse;font-size:14px;min-width:560px}
 th,td{padding:10px 12px;text-align:right;border-bottom:1px solid var(--line);white-space:nowrap}
@@ -226,6 +240,7 @@ td.num{font-variant-numeric:tabular-nums}
     <section>
       <h2>صور تنتظر المراجعة <span class="count" id="cMedia">0</span></h2>
       <p class="sub">افتح كل صورة وتأكد أنه لا يوجد فيها رقم جوال أو حساب تواصل. المرفوضة لا تظهر أبداً.</p>
+      <div class="rv-start" id="rvStart" hidden><button class="btn-ok" type="button" id="rvGo">⚡ مراجعة سريعة</button><button type="button" id="rvAll">قبول كل الصور</button></div>
       <div class="grid" id="media"></div>
     </section>
 
@@ -466,6 +481,7 @@ function render(){
       <div class="body"><div><b>${esc(i.photographer)}</b><div class="meta">رُفعت ${dateAr(i.created_at)}</div></div>
       <div class="actions"><button class="btn-ok" type="button" data-act="okMedia">قبول</button><button class="btn-bad" type="button" data-act="noMedia">رفض</button></div></div></div>`);
   $("cMedia").textContent = fmt(cards.length);
+  $("rvStart").hidden = !cards.length;
   $("media").innerHTML = cards.length ? cards.join("") : '<div class="empty" style="grid-column:1/-1">لا توجد صور تنتظر المراجعة.</div>';
 
   const Y = data.payouts;
@@ -670,6 +686,51 @@ function suspForm(box){
   box.querySelector(".actions").replaceWith(f);
 }
 
+function rvQueue(){
+  const q = [];
+  for (const p of (media && media.profile) || []) for (const [k, url] of [["صورة البروفايل", p.avatar], ["صورة الغلاف", p.cover]]) if (url) q.push({ kind:"profile", id:p.id, url, who:p.photographer, label:k + " جديدة" });
+  for (const i of (media && media.portfolio) || []) q.push({ kind:"item", id:i.id, url:i.url, who:i.photographer, label:"صورة أعمال · " + dateAr(i.created_at) });
+  return q;
+}
+function rvCall(it, ok){ return it.kind === "item" ? sb.rpc("admin_review_image", { p_item: it.id, p_approve: ok }) : sb.rpc("admin_review_profile_media", { p_photographer: it.id, p_approve: ok }); }
+function rvOpen(){
+  const q = rvQueue(); if (!q.length) return;
+  let i = 0, nOk = 0, nNo = 0, lock = false, sx = null;
+  const o = document.createElement("div"); o.className = "rv"; o.setAttribute("role", "dialog");
+  document.body.appendChild(o);
+  function close(){ o.remove(); document.removeEventListener("keydown", key); loadDash(); }
+  function draw(){
+    if (i >= q.length){ o.innerHTML = '<div class="rv-done">✅ خلصت المراجعة<div style="font-size:15px;opacity:.8">قبلت ' + nOk + ' · رفضت ' + nNo + '</div><button type="button" style="background:#fff;color:#000;border:0;border-radius:99px;padding:10px 24px;font:inherit;font-size:16px" data-rvx>رجوع للوحة</button></div>'; return; }
+    const it = q[i];
+    o.innerHTML = '<div class="rv-top"><button type="button" data-rvx>إغلاق</button><div class="rv-who"><b>' + esc(it.who) + '</b><small>' + esc(it.label) + '</small></div><span dir="ltr">' + (i + 1) + ' / ' + q.length + '</span></div>'
+      + '<div class="rv-img"><img src="' + safeUrl(it.url) + '" alt=""></div>'
+      + '<div class="rv-hint">تأكد ما فيها رقم جوال أو حساب تواصل · اسحب يمين للقبول ويسار للرفض</div>'
+      + '<div class="rv-btns"><button class="rv-ok" type="button" data-rv="1">✓ قبول</button><button class="rv-no" type="button" data-rv="0">✕ رفض</button></div>';
+    if (q[i + 1]) { const pre = new Image(); pre.src = q[i + 1].url; }
+  }
+  async function decide(ok){
+    if (lock || i >= q.length) return; lock = true;
+    const box = o.querySelector(".rv-img"); if (box) box.classList.add(ok ? "go-ok" : "go-no");
+    const r = await rvCall(q[i], ok);
+    lock = false;
+    if (r && r.error){ if (box) box.classList.remove("go-ok", "go-no"); return toast(arErr(r.error)); }
+    ok ? nOk++ : nNo++; i++; draw();
+  }
+  function key(e){ if (e.key === "Escape") close(); else if (e.key === "ArrowRight" || e.key === "Enter") decide(true); else if (e.key === "ArrowLeft" || e.key === "Delete") decide(false); }
+  o.addEventListener("click", e => { if (e.target.closest("[data-rvx]")) return close(); const b = e.target.closest("[data-rv]"); if (b) decide(b.dataset.rv === "1"); });
+  o.addEventListener("touchstart", e => { if (e.target.closest(".rv-img")) sx = e.touches[0].clientX; }, { passive:true });
+  o.addEventListener("touchend", e => { if (sx == null) return; const dx = e.changedTouches[0].clientX - sx; sx = null; if (Math.abs(dx) > 60) decide(dx > 0); });
+  document.addEventListener("keydown", key); draw();
+}
+document.addEventListener("click", async e => {
+  if (e.target.closest("#rvGo")) return rvOpen();
+  const all = e.target.closest("#rvAll"); if (!all) return;
+  const q = rvQueue(); if (!q.length) return;
+  if (all.dataset.confirm !== "1"){ all.dataset.confirm = "1"; all.textContent = "متأكد؟ قبول " + q.length + " صورة بدون فتحها"; setTimeout(() => { if (all.isConnected){ all.dataset.confirm = ""; all.textContent = "قبول كل الصور"; } }, 4000); return; }
+  if (busy) return; busy = true; all.disabled = true; all.textContent = "جارٍ القبول…";
+  let n = 0; for (const it of q){ const r = await rvCall(it, true); if (!(r && r.error)) n++; }
+  busy = false; toast("تم قبول " + n + " صورة"); loadDash();
+});
 async function act(fn, ok){
   if (busy) return; busy = true;
   const r = await fn(); busy = false;
