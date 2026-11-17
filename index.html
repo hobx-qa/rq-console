@@ -141,6 +141,16 @@ td.num{font-variant-numeric:tabular-nums}
 .switch[aria-checked="true"]{background:var(--ok)}.switch[aria-checked="true"]::after{right:25px}
 .toast{position:fixed;bottom:calc(16px + env(safe-area-inset-bottom,0px));left:50%;transform:translateX(-50%);background:var(--fg);color:var(--bg);padding:10px 16px;border-radius:10px;font-size:14px;max-width:calc(100% - 32px);z-index:5}
 @media (prefers-reduced-motion:reduce){.switch::after{transition:none}}
+.tabs{position:sticky;top:0;z-index:4;display:grid;grid-template-columns:repeat(5,1fr);gap:4px;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:5px;box-shadow:0 4px 14px rgba(0,0,0,.06)}
+.tabs button{position:relative;display:flex;flex-direction:column;align-items:center;gap:2px;border:0;background:transparent;border-radius:12px;padding:8px 2px;font:inherit;font-size:18px;color:var(--muted);cursor:pointer;min-width:0}
+.tabs button span{font-size:12px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.tabs button[aria-selected="true"]{background:var(--gold-soft);color:var(--fg)}
+.tabs i{position:absolute;top:3px;left:calc(50% - 26px);font-style:normal;font-size:11px;font-weight:800;background:var(--bad);color:#fff;border-radius:99px;min-width:18px;padding:0 5px;line-height:18px}
+.tabs i:empty{display:none}
+#vDash[data-cur] [data-tab]{display:none}
+#vDash[data-cur="home"] [data-tab="home"],#vDash[data-cur="ph"] [data-tab="ph"],#vDash[data-cur="bk"] [data-tab="bk"],#vDash[data-cur="cl"] [data-tab="cl"],#vDash[data-cur="set"] [data-tab="set"]{display:block}
+#vDash[data-cur="home"] .stats[data-tab="home"]{display:grid}
+@media (min-width:700px){.tabs button{flex-direction:row;justify-content:center;gap:6px;font-size:16px}.tabs button span{font-size:14px}.tabs i{position:static}}
 </style>
 </head>
 <body>
@@ -206,26 +216,33 @@ td.num{font-variant-numeric:tabular-nums}
   <!-- لوحة الإدارة -->
   <div id="vDash" hidden style="display:flex;flex-direction:column;gap:22px">
     <div class="viewer-note" id="viewerNote" hidden>وضع المتابعة: تشاهد كل شيء، والقرارات عند المدير.</div>
-    <div class="stats">
+    <nav class="tabs" id="tabs" role="tablist">
+      <button type="button" data-go="home">🏠<span>الرئيسية</span><i data-b="home"></i></button>
+      <button type="button" data-go="ph">📸<span>المصوّرون</span><i data-b="ph"></i></button>
+      <button type="button" data-go="bk">📅<span>الحجوزات</span><i data-b="bk"></i></button>
+      <button type="button" data-go="cl">👥<span>العملاء</span></button>
+      <button type="button" data-go="set">⚙️<span>الإعدادات</span></button>
+    </nav>
+    <div class="stats" data-tab="home">
       <div class="stat"><div class="k">مصورون معتمدون</div><div class="v" data-s="photographers_approved">—</div></div>
       <div class="stat"><div class="k">حجوزات هذا الشهر</div><div class="v" data-s="bookings_month">—</div></div>
       <div class="stat gold"><div class="k">عمولتك هذا الشهر</div><div class="v"><span data-s="commission_month">—</span> <small>ر.ق</small></div></div>
       <div class="stat"><div class="k">مستحقات للمصورين</div><div class="v"><span data-s="payouts_due">—</span> <small>ر.ق</small></div></div>
     </div>
 
-    <section>
+    <section data-tab="home">
       <h2>يحتاج انتباهك <span class="count" id="cAlerts">0</span></h2>
       <p class="sub">تُحسب تلقائياً من الحجوزات، وتتحدث اللوحة وحدها كل دقيقة.</p>
       <div class="list" id="alerts"></div>
     </section>
 
-    <section>
+    <section data-tab="ph">
       <h2>طلبات المصورين <span class="count" id="cPending">0</span></h2>
       <p class="sub">لا يظهر أي مصور للعملاء قبل أن تقبله.</p>
       <div class="list" id="pending"></div>
     </section>
 
-    <section>
+    <section data-tab="ph">
       <h2>المصورون <span class="count" id="cPhotogs">0</span></h2>
       <p class="sub">أوقف أي مصور مؤقتاً أو نهائياً، أو أعده للعمل. الموقوف لا تظهر صفحته للعملاء ولا يستقبل حجوزات، ويصله إشعار بذلك.</p>
       <div class="filters" id="phFilters">
@@ -237,20 +254,20 @@ td.num{font-variant-numeric:tabular-nums}
       <div class="list" id="photogs"></div>
     </section>
 
-    <section>
+    <section data-tab="ph">
       <h2>صور تنتظر المراجعة <span class="count" id="cMedia">0</span></h2>
       <p class="sub">افتح كل صورة وتأكد أنه لا يوجد فيها رقم جوال أو حساب تواصل. المرفوضة لا تظهر أبداً.</p>
       <div class="rv-start" id="rvStart" hidden><button class="btn-ok" type="button" id="rvGo">⚡ مراجعة سريعة</button><button type="button" id="rvAll">قبول كل الصور</button></div>
       <div class="grid" id="media"></div>
     </section>
 
-    <section>
+    <section data-tab="bk">
       <h2>حوّل للمصورين</h2>
       <p class="sub">حجوزات اكتملت ودفعها العميل. حوّل المبلغ للمصور ثم اضغط «تم التحويل».</p>
       <div class="list" id="payouts"></div>
     </section>
 
-    <section>
+    <section data-tab="bk">
       <h2>إدارة الحجوزات</h2>
       <p class="sub">ألغِ حجزاً، أو انقله لمصوّر آخر بنفس السعر، أو سجّل استرجاع المبلغ، أو اقرأ المحادثة عند أي خلاف. كل تغيير يصل إشعاره للعميل والمصوّر.</p>
       <div class="filters" id="bkFilters">
@@ -261,7 +278,7 @@ td.num{font-variant-numeric:tabular-nums}
       <div class="list" id="bkList"></div>
     </section>
 
-    <section>
+    <section data-tab="bk">
       <h2>بطاقات الهدايا 🎁 <span class="count" id="cGifts">0</span></h2>
       <p class="sub">العميل يطلب بطاقة هدية ويدفع عبر فوران أو كاش. بعد استلام المبلغ اضغط «استلمت الدفع»، فيصله كود الهدية فوراً، ويستخدمه المُهدى إليه عند الحجز.</p>
       <div class="stats" style="margin-bottom:12px">
@@ -277,7 +294,7 @@ td.num{font-variant-numeric:tabular-nums}
       <div class="list" id="gfList"></div>
     </section>
 
-    <section>
+    <section data-tab="cl">
       <h2>رسائل للمستخدمين</h2>
       <p class="sub">تظهر داخل التطبيق في صفحة «حسابي» مع علامة على الجرس. لا تصل للموقوفين.</p>
       <div class="panel admin-only" id="msgBox">
@@ -296,26 +313,26 @@ td.num{font-variant-numeric:tabular-nums}
       <div class="list" id="msgHist"></div>
     </section>
 
-    <section>
+    <section data-tab="cl">
       <h2>العملاء <span class="count" id="cClients">0</span></h2>
       <p class="sub">أوقف أي عميل يسيء الاستخدام: لا يستطيع الحجز ولا إرسال الرسائل، ويصله إشعار.</p>
       <input class="search" id="clSearch" type="search" placeholder="ابحث بالاسم أو الجوال" style="margin-bottom:10px">
       <div class="list" id="clList"></div>
     </section>
 
-    <section>
+    <section data-tab="home">
       <h2>آخر الحجوزات</h2>
       <p class="sub">آخر 15 حجزاً مع عمولتك.</p>
       <div id="bookings"></div>
     </section>
 
-    <section>
+    <section data-tab="set">
       <h2>يعمل تلقائياً</h2>
       <p class="sub" id="lastRun">كل 15 دقيقة: إلغاء الحجز الذي لم يؤكده المصور خلال 24 ساعة، وإنهاء الحجز بعد المناسبة بيومين، وانتهاء الفترة المجانية، ومنع أرقام الجوال في النصوص.</p>
       <button id="runNow" type="button">شغّل الآن</button>
     </section>
 
-    <section>
+    <section data-tab="set">
       <h2>الإعدادات</h2>
       <div class="settings">
         <div class="row">
@@ -802,6 +819,16 @@ $("autoSwitch").onclick = () => { if (!data) return; const next = !data.settings
   act(() => sb.from("app_settings").update({ value: next, updated_at: new Date().toISOString() }).eq("key", "auto_approve_photographers"), next ? "القبول التلقائي يعمل" : "القبول التلقائي متوقف"); };
 
 route();
+
+function tabGo(t){ const ok=["home","ph","bk","cl","set"]; if(!ok.includes(t)) t="home"; $("vDash").dataset.cur=t;
+  document.querySelectorAll("#tabs [data-go]").forEach(b=>b.setAttribute("aria-selected",String(b.dataset.go===t)));
+  try{ history.replaceState(null,"","#"+t); }catch(e){} window.scrollTo(0,0); }
+document.addEventListener("click", e => { const b=e.target.closest("#tabs [data-go]"); if(b) tabGo(b.dataset.go); if(e.target.closest("[data-goto]")) tabGo("bk"); }, true);
+function tabBadges(){ const n=id=>{ const el=document.getElementById(id); return el?Number(String(el.textContent).replace(/[^0-9]/g,""))||0:0; };
+  const B={home:n("cAlerts"),ph:n("cPending")+n("cMedia"),bk:0};
+  document.querySelectorAll("#tabs [data-b]").forEach(i=>{ const v=B[i.dataset.b], t=v?String(v):""; if(i.textContent!==t) i.textContent=t; }); }
+new MutationObserver(tabBadges).observe(document.getElementById("vDash"),{subtree:true,childList:true,characterData:true});
+tabGo((location.hash||"").slice(1));
 </script>
 </body>
 </html>
